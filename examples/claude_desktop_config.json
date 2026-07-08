@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "illustrator": {
+      "command": "node",
+      "args": ["/absolute/path/to/illustrator-mcp/dist/index.js"]
+    }
+  }
+}
