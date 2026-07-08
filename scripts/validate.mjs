@@ -22,7 +22,8 @@ const dist = (p) => pathToFileURL(join(ROOT, "dist", p)).href;
 const { buildScript, registeredToolDefs } = await import(dist("bridge.js"));
 const mods = [
   "tools/documents.js", "tools/inspect.js", "tools/shapes.js",
-  "tools/transform.js", "tools/layers.js", "tools/selection.js", "tools/script.js",
+  "tools/transform.js", "tools/layers.js", "tools/selection.js",
+  "tools/vectorize.js", "tools/script.js",
 ];
 const mock = { registerTool() {} };
 for (const m of mods) {
@@ -39,6 +40,8 @@ const sample = {
   text: "Ciào €", font_size: 24, font: "ArialMT", embed: false,
   dx: 5, dy: 5, rotate: 10, scale_x: 120, scale_y: 80, order: "front",
   horizontal: "center", vertical: "middle", action: "group", exact: false,
+  mode: "color", max_colors: 16, threshold: 128, path_fidelity: 50,
+  corner_fidelity: 50, noise_fidelity: 25, expand: true, new_document: true,
   code: "var d=__doc(); return __itemInfo(d.pathItems.rectangle(0,0,10,10));",
 };
 

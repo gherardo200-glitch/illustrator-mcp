@@ -13,6 +13,7 @@ import { registerShapeTools } from "./tools/shapes.js";
 import { registerTransformTools } from "./tools/transform.js";
 import { registerLayerTools } from "./tools/layers.js";
 import { registerSelectionTools } from "./tools/selection.js";
+import { registerVectorizeTools } from "./tools/vectorize.js";
 import { registerScriptTool } from "./tools/script.js";
 
 export function buildServer(): McpServer {
@@ -25,6 +26,7 @@ export function buildServer(): McpServer {
   registerTransformTools(server);
   registerLayerTools(server);
   registerSelectionTools(server);
+  registerVectorizeTools(server);
   registerScriptTool(server);
 
   return server;

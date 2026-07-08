@@ -19,7 +19,13 @@ Say things like:
 - *"Export the current artboard as a 2x transparent PNG to my Desktop."*
 - *"Read all the text objects in this document and list their contents."*
 
-It ships with **28 tools** covering documents, artboards, layers, shapes, text, images, transforms, alignment, color, selection, and export — plus a **`run_script`** escape hatch that can execute *any* Illustrator ExtendScript, so an agent is never boxed in.
+It ships with **29 tools** covering documents, artboards, layers, shapes, text, images, transforms, alignment, color, selection, export, and **image vectorization (auto-trace)** — plus a **`run_script`** escape hatch that can execute *any* Illustrator ExtendScript, so an agent is never boxed in.
+
+**Vectorize a raster image → editable paths.** A common workflow: a client sends a
+raster/AI-generated image and you need clean vector paths. `illustrator_vectorize_image`
+runs Illustrator's Image Trace and expands the result into real, editable paths — point
+it at a file (or paste the image) and get vector art back. Best on logos, flat art, line
+art, and few-color graphics; photorealistic images produce many paths and need cleanup.
 
 ---
 
@@ -157,6 +163,7 @@ If you denied it or nothing happens, enable it manually:
 | **Documents** | `illustrator_create_document`, `illustrator_open_document`, `illustrator_list_documents`, `illustrator_save_document`, `illustrator_close_document`, `illustrator_export_document` |
 | **Inspect** | `illustrator_get_document_info`, `illustrator_get_selection`, `illustrator_list_layers`, `illustrator_list_artboards` |
 | **Create** | `illustrator_create_rectangle`, `illustrator_create_ellipse`, `illustrator_create_line`, `illustrator_create_text`, `illustrator_place_image` |
+| **Vectorize** | `illustrator_vectorize_image` (Image Trace → editable paths) |
 | **Edit** | `illustrator_transform_selection`, `illustrator_set_color`, `illustrator_arrange_selection`, `illustrator_align_selection`, `illustrator_delete_selection`, `illustrator_group_selection` |
 | **Layers** | `illustrator_create_layer`, `illustrator_set_active_layer` |
 | **Selection** | `illustrator_select_all`, `illustrator_deselect_all`, `illustrator_select_by_name` |
