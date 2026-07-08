@@ -204,7 +204,8 @@ return { count: out.length, texts: out };
 
 - **Chat panel inside Illustrator** (UXP/CEP): a dockable panel with a chat box so
   you can talk to the assistant without leaving Illustrator. See
-  [`docs/IN_APP_CHAT.md`](docs/IN_APP_CHAT.md) for the design and integration plan.
+  [`docs/IN_APP_CHAT.md`](docs/IN_APP_CHAT.md) for the design, integration plan, and
+  a cost breakdown (in Italian).
 - More workflow tools (pathfinder, effects, symbols, swatches, batch export).
 - Optional hosted / HTTP transport for remote ChatGPT connectors.
 
