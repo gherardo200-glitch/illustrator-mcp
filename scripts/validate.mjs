@@ -20,10 +20,11 @@ const ROOT = join(HERE, "..");
 const dist = (p) => pathToFileURL(join(ROOT, "dist", p)).href;
 
 const { buildScript, registeredToolDefs } = await import(dist("bridge.js"));
+const { IMAGE_TRACE_BODY, VTRACER_IMPORT_BODY } = await import(dist("tools/vectorize.js"));
 const mods = [
   "tools/documents.js", "tools/inspect.js", "tools/shapes.js",
   "tools/transform.js", "tools/layers.js", "tools/selection.js",
-  "tools/vectorize.js", "tools/script.js",
+  "tools/script.js",
 ];
 const mock = { registerTool() {} };
 for (const m of mods) {
@@ -62,6 +63,23 @@ for (const def of registeredToolDefs) {
     console.log(String(e.stderr || e.message).split("\n").slice(0, 4).map((l) => "       " + l).join("\n"));
   }
 }
+// Custom-handler tools (not in the registry) — syntax-check their bodies too.
+for (const [name, body] of [
+  ["vectorize:image_trace", IMAGE_TRACE_BODY],
+  ["vectorize:vtracer_import", VTRACER_IMPORT_BODY],
+]) {
+  try {
+    const f = join(tmp, name.replace(/:/g, "_") + ".js");
+    writeFileSync(f, buildScript(body, { path: "/tmp/x.png", svgPath: "/tmp/x.svg", mode: "color" }), "utf8");
+    execFileSync(process.execPath, ["--check", f], { stdio: "pipe" });
+    console.log(`  ok   illustrator_${name}`);
+  } catch (e) {
+    failures++;
+    console.log(`  FAIL illustrator_${name}`);
+    console.log(String(e.stderr || e.message).split("\n").slice(0, 4).map((l) => "       " + l).join("\n"));
+  }
+}
+
 console.log(`\nSyntax check: ${failures === 0 ? "ALL PASSED" : failures + " FAILED"}`);
 
 console.log(`\n== MCP handshake (initialize + tools/list) ==`);

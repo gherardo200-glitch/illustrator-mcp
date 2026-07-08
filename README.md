@@ -177,6 +177,30 @@ from Illustrator's native Y-up global system.)
 **Colors:** hex (`#FF7F00`), a common name (`red`, `blue`, `green`, …), or `none`.
 Colors are automatically converted to RGB or CMYK to match the document.
 
+### Image vectorization (two engines)
+
+`illustrator_vectorize_image` supports two engines:
+
+- **`vtracer`** (default) — the open-source [VTracer](https://github.com/visioncortex/vtracer)
+  CLI produces a clean SVG that is opened in Illustrator as editable paths. Free,
+  local, and usually cleaner than Image Trace. **Requires the `vtracer` binary.**
+- **`image_trace`** — Illustrator's built-in Image Trace. No install, kept as a fallback.
+
+**Install VTracer** (once), pick one:
+
+- **Prebuilt binary (no Rust needed):** download your platform's archive from the
+  [releases page](https://github.com/visioncortex/vtracer/releases), extract the
+  `vtracer` binary, and put it on your `PATH` (or point `VTRACER_PATH` at it).
+  On macOS you may need `xattr -d com.apple.quarantine /path/to/vtracer`.
+- **From source:** `cargo install vtracer` (needs the Rust toolchain).
+
+The server finds VTracer via `PATH` or the `VTRACER_PATH` environment variable. If
+it's missing, the tool returns clear install instructions and you can fall back to
+`engine: "image_trace"`.
+
+Both engines are best on logos, flat art, line art, and few-color graphics;
+photorealistic images produce many paths and usually need manual cleanup.
+
 ### The `run_script` escape hatch
 
 `illustrator_run_script` runs arbitrary ExtendScript. The code runs inside a
