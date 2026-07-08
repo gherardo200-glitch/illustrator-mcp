@@ -113,16 +113,26 @@ Add to `~/.cursor/mcp.json` (or the project's `.cursor/mcp.json`):
 }
 ```
 
-### ChatGPT
+### ChatGPT (desktop or web)
 
-ChatGPT supports MCP through its **connectors / developer mode**. Point a local
-(stdio) connector at the same `node dist/index.js` command. Because Illustrator
-runs locally, the server must run on the same machine. See
-[`docs/CHATGPT.md`](docs/CHATGPT.md) for the current options and caveats.
+ChatGPT reaches MCP servers through **connectors** (Developer Mode, Plus/Pro or
+Business/Enterprise/Edu) — it does **not** launch a local stdio server directly.
+The clean way to connect this **local** server is OpenAI's **Secure MCP Tunnel**
+(`tunnel-client`): outbound-only, no public port. This repo ships an **HTTP
+transport** for exactly this — run `node dist/index.js --http` (listens on
+`http://127.0.0.1:3000/mcp`) — though the tunnel can also drive the stdio server
+directly.
+
+Step-by-step: **[`docs/ATTIVAZIONE.md`](docs/ATTIVAZIONE.md)** (Italian) ·
+technical notes: [`docs/CHATGPT.md`](docs/CHATGPT.md).
 
 ### Any other MCP client
 
-The server speaks standard MCP over **stdio**. Command: `node dist/index.js`.
+Two transports, one codebase:
+
+- **stdio** (default) — `node dist/index.js`
+- **Streamable HTTP** — `node dist/index.js --http` (`PORT` / `HOST` override the
+  default `127.0.0.1:3000`, endpoint `/mcp`, `/healthz` for liveness)
 
 ---
 
@@ -207,7 +217,7 @@ return { count: out.length, texts: out };
   [`docs/IN_APP_CHAT.md`](docs/IN_APP_CHAT.md) for the design, integration plan, and
   a cost breakdown (in Italian).
 - More workflow tools (pathfinder, effects, symbols, swatches, batch export).
-- Optional hosted / HTTP transport for remote ChatGPT connectors.
+- ✅ HTTP (Streamable) transport for ChatGPT / remote MCP clients (`--http`).
 
 Contributions welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 

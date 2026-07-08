@@ -231,7 +231,11 @@ export const registeredToolDefs: IllustratorToolDef[] = [];
  * runs it, and returns a clean text result or an actionable error.
  */
 export function registerIllustratorTool(server: McpServer, def: IllustratorToolDef): void {
-  registeredToolDefs.push(def);
+  // Dedupe by name so the registry stays bounded even when buildServer() runs
+  // once per request in stateless HTTP mode.
+  const existing = registeredToolDefs.findIndex((d) => d.name === def.name);
+  if (existing >= 0) registeredToolDefs[existing] = def;
+  else registeredToolDefs.push(def);
   server.registerTool(
     def.name,
     {

@@ -1,39 +1,34 @@
 # Using this connector with ChatGPT
 
-ChatGPT can use MCP servers, but the exact path depends on your plan and the
-current state of OpenAI's MCP support. Because this connector controls a **local**
-copy of Illustrator, the server has to run on the **same machine** as Illustrator.
+**Step-by-step activation (Italian):** see [`ATTIVAZIONE.md`](ATTIVAZIONE.md).
 
-## Option A — Local MCP connector (ChatGPT desktop, developer/MCP mode)
+## How ChatGPT connects (the facts)
 
-If your ChatGPT desktop app exposes a local MCP / "developer mode" connector,
-add a server that runs:
+- **ChatGPT does not talk to a local stdio server directly.** It reaches MCP
+  servers through **connectors**, which are called from OpenAI's side — so the
+  server needs a reachable endpoint, not a local command.
+- The clean, secure way to expose a **local** server (without opening a public
+  port) is OpenAI's **Secure MCP Tunnel**: a small agent (`tunnel-client`) runs
+  on your machine, makes an **outbound-only** HTTPS connection to OpenAI, and
+  forwards requests to your MCP server — which it can reach **over stdio or HTTP**.
+- Requires **Developer Mode** (ChatGPT Plus/Pro, or Business/Enterprise/Edu) and
+  an **OpenAI Platform** account for the tunnel's API key + tunnel id.
+- Works in the **ChatGPT desktop app** (and web). Write actions ask for confirmation.
 
-```
-command: node
-args:    ["/absolute/path/to/illustrator-mcp/dist/index.js"]
-```
+## Two ways to point the tunnel at this connector
 
-This is identical to the Claude Desktop setup — the server speaks standard MCP
-over stdio, so any client that can launch a local stdio MCP process works.
+This server ships **both transports** from one codebase:
 
-## Option B — Remote (HTTP) connector + local tunnel
+1. **stdio (no HTTP needed)** — let the tunnel launch the server directly:
+   `tunnel-client init --sample sample_mcp_stdio_local --mcp-command "node /path/to/dist/index.js"`
+2. **HTTP** — run `node dist/index.js --http` (listens on `http://127.0.0.1:3000/mcp`),
+   then `tunnel-client init --sample sample_mcp_remote_no_auth --mcp-server-url http://127.0.0.1:3000/mcp`.
 
-ChatGPT's hosted "connectors" expect a **remote** MCP server reachable over HTTPS.
-Since Illustrator is local, you would:
+Full commands and the ChatGPT-side connector step are in
+[`ATTIVAZIONE.md`](ATTIVAZIONE.md). Official reference:
+[Secure MCP Tunnel guide](https://developers.openai.com/api/docs/guides/secure-mcp-tunnels).
 
-1. Run this server behind an HTTP transport (on the roadmap — see the main README).
-2. Expose `localhost` to the internet with a tunnel (e.g. `cloudflared`, `ngrok`).
-3. Register that HTTPS URL as a custom connector in ChatGPT.
+## Simpler alternative
 
-This works but adds security surface (you're exposing a machine that can script
-Illustrator). Only do it on a trusted network, ideally with auth on the tunnel.
-
-## Recommendation
-
-For the smoothest experience today, use **Claude Desktop / Claude Code / Cursor**
-with the stdio setup in the main README. ChatGPT support improves as OpenAI's MCP
-client matures; Option A is the target once local MCP connectors are broadly
-available in your ChatGPT build.
-
-Regardless of the client, the tools, behavior, and permissions are the same.
+If you don't specifically need ChatGPT, **Claude Desktop / Claude Code / Cursor**
+use the stdio transport directly — no tunnel, no extra account. See the main README.
