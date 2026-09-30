@@ -142,7 +142,10 @@ Two transports, one codebase:
 
 - **stdio** (default): `node dist/index.js`
 - **Streamable HTTP**: `node dist/index.js --http` (`PORT` / `HOST` override the
-  default `127.0.0.1:3000`, endpoint `/mcp`, `/healthz` for liveness)
+  default `127.0.0.1:3000`, endpoint `/mcp`, `/healthz` for liveness). Rejects
+  requests with an unrecognized `Host`/`Origin` header (DNS-rebinding
+  protection); set `MCP_HTTP_TOKEN` to also require an `X-MCP-Token` header on
+  every request. See [Safety notes](#safety-notes).
 
 ---
 
@@ -232,16 +235,26 @@ return { count: out.length, texts: out };
   fit, and **review scripts before approving them**, especially from an AI client
   you don't fully trust.
 - **In `--http` mode the server opens a real network port** (default
-  `127.0.0.1:3000/mcp`) **with no authentication and no Origin/Host validation**.
-  Anyone who can reach that port can call any tool, including `run_script`. This
-  includes a malicious webpage open in your browser: even with the `127.0.0.1`
-  default, a **DNS-rebinding attack** (a page on an attacker-controlled domain
-  that briefly resolves to `127.0.0.1`) can reach it, because the transport does
-  not validate the `Host`/`Origin` headers. Keep `HOST` at its `127.0.0.1`
-  default, don't port-forward or expose `3000` on your LAN/internet, only run
-  `--http` mode while you're actively using it, and only use OpenAI's
-  outbound-only Secure MCP Tunnel to reach it (see
-  [`docs/CHATGPT.md`](docs/CHATGPT.md)). stdio mode (the default, used by Claude/
+  `127.0.0.1:3000/mcp`). Anyone who can reach that port can call any tool,
+  including `run_script`. The server now rejects requests whose `Host` or
+  `Origin` header isn't `127.0.0.1`/`localhost` (plus whatever `HOST` you set)
+  on that port, which is the standard defense against **DNS-rebinding
+  attacks** (a page on an attacker-controlled domain that briefly resolves to
+  `127.0.0.1`, hoping to reach your local server through the browser): the
+  browser still sends the attacker's real hostname in `Host`/`Origin`, so it
+  never matches the allowlist and gets a `403`. There is still **no
+  authentication by default**, so anything else that *can* reach the port
+  with a correct `Host` header (another local process, or a device on your
+  LAN/internet if you port-forward it) can still call every tool. Set
+  `MCP_HTTP_TOKEN` to a random secret to require a matching `X-MCP-Token`
+  header on every request (plain requests get `401`); leave it unset and
+  behaviour is unchanged. Keep `HOST` at its `127.0.0.1` default, don't
+  port-forward or expose `3000` on your LAN/internet, only run `--http` mode
+  while you're actively using it, and only use OpenAI's outbound-only Secure
+  MCP Tunnel to reach it (see [`docs/CHATGPT.md`](docs/CHATGPT.md); note the
+  tunnel client doesn't document a way to attach a custom header today, so
+  `MCP_HTTP_TOKEN` and the ChatGPT tunnel may not combine unless you add a
+  small local proxy that injects it). stdio mode (the default, used by Claude/
   Cursor) does not open a network port and is not affected.
 
 ---
