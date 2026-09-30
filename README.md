@@ -227,9 +227,22 @@ return { count: out.length, texts: out };
 - Tools carry MCP **annotations** (`readOnlyHint`, `destructiveHint`, …) so clients
   can prompt before destructive actions (delete, close, `run_script`).
 - `run_script` is powerful: it can modify/delete artwork and touch the file
-  system. Prefer the specialized tools when they fit, and review scripts before
-  approving them.
-- The server only listens on stdio and never opens a network port.
+  system (read, write, or delete any file your OS user can access — ExtendScript's
+  `File`/`Folder` API is not sandboxed). Prefer the specialized tools when they
+  fit, and **review scripts before approving them**, especially from an AI client
+  you don't fully trust.
+- **In `--http` mode the server opens a real network port** (default
+  `127.0.0.1:3000/mcp`) **with no authentication and no Origin/Host validation**.
+  Anyone who can reach that port can call any tool, including `run_script`. This
+  includes a malicious webpage open in your browser: even with the `127.0.0.1`
+  default, a **DNS-rebinding attack** (a page on an attacker-controlled domain
+  that briefly resolves to `127.0.0.1`) can reach it, because the transport does
+  not validate the `Host`/`Origin` headers. Keep `HOST` at its `127.0.0.1`
+  default, don't port-forward or expose `3000` on your LAN/internet, only run
+  `--http` mode while you're actively using it, and only use OpenAI's
+  outbound-only Secure MCP Tunnel to reach it (see
+  [`docs/CHATGPT.md`](docs/CHATGPT.md)). stdio mode (the default, used by Claude/
+  Cursor) does not open a network port and is not affected.
 
 ---
 
