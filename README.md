@@ -1,8 +1,10 @@
 # Illustrator MCP
 
-**Control Adobe Illustrator with natural language — from Claude, ChatGPT, Cursor, or any MCP client.**
+**Give Claude, ChatGPT, or Cursor the keyboard and mouse for a real, already-open Adobe Illustrator document.**
 
-This is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that acts as a bridge between an AI assistant and Adobe Illustrator. Ask your assistant to *"create an A4 poster, add a red rounded rectangle and a headline"* and it drives Illustrator for you through Illustrator's own scripting engine (ExtendScript).
+This is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that bridges an AI assistant and Adobe Illustrator itself, not a generator that hands you a picture and calls it done. Ask your assistant to *"create an A4 poster, add a red rounded rectangle and a headline"* and it drives your actual, running copy of Illustrator through Illustrator's own scripting engine (ExtendScript). What comes out is the same file you can keep editing by hand afterward, layers and all.
+
+**Not just image generation.** Plenty of tools, OpenAI's own image models included, turn a prompt into a vector-looking picture. That picture has no relationship to anything you're working on: no layers, no editable text, no artboards, nothing left to select or nudge. Illustrator MCP is a different kind of thing. It opens, reads, and edits a real Illustrator document while it's sitting open on your screen. Vectorizing a raster image is one of its 29 tools, not the whole project.
 
 > Works on **macOS** and **Windows**. Illustrator must be installed on the same machine as the server.
 
@@ -14,18 +16,20 @@ Say things like:
 
 - *"Create a 1080×1080 RGB document and add the title 'SALE' in bold orange."*
 - *"Draw three circles in a row, then align them to the center of the artboard."*
+- *"Open `campaign.ai`, find the layer called 'Pricing', and change the numbers."*
 - *"Place `~/logo.png` in the top-left corner and scale it to 200px wide."*
 - *"Select everything named 'badge' and make it blue."*
 - *"Export the current artboard as a 2x transparent PNG to my Desktop."*
 - *"Read all the text objects in this document and list their contents."*
 
-It ships with **29 tools** covering documents, artboards, layers, shapes, text, images, transforms, alignment, color, selection, export, and **image vectorization (auto-trace)** — plus a **`run_script`** escape hatch that can execute *any* Illustrator ExtendScript, so an agent is never boxed in.
-
-**Vectorize a raster image → editable paths.** A common workflow: a client sends a
-raster/AI-generated image and you need clean vector paths. `illustrator_vectorize_image`
-runs Illustrator's Image Trace and expands the result into real, editable paths — point
-it at a file (or paste the image) and get vector art back. Best on logos, flat art, line
-art, and few-color graphics; photorealistic images produce many paths and need cleanup.
+Every one of those runs against the Illustrator window that's actually open in
+front of you, not a sandbox or a throwaway render. The server ships **29 tools**
+covering documents, artboards, layers, shapes, text, images, transforms,
+alignment, color, selection, and export, plus a `run_script` escape hatch that
+can execute *any* Illustrator ExtendScript, so an agent is never boxed in. Image
+vectorization (`illustrator_vectorize_image`, Image Trace under the hood,
+expanded into real editable paths) is one of those 29 tools: handy when a client
+hands you a raster logo and you need clean paths, but a feature, not the product.
 
 ---
 
@@ -66,7 +70,7 @@ npm install        # also builds via the "prepare" script
 npm run build      # (only needed if you skip install-time build)
 ```
 
-This produces `dist/index.js`, the server entry point. Note its **absolute path** — you'll need it for the client config, e.g.:
+This produces `dist/index.js`, the server entry point. Note its **absolute path**: you'll need it for the client config, e.g.:
 
 ```
 /absolute/path/to/illustrator-mcp/dist/index.js
@@ -122,11 +126,11 @@ Add to `~/.cursor/mcp.json` (or the project's `.cursor/mcp.json`):
 ### ChatGPT (desktop or web)
 
 ChatGPT reaches MCP servers through **connectors** (Developer Mode, Plus/Pro or
-Business/Enterprise/Edu) — it does **not** launch a local stdio server directly.
+Business/Enterprise/Edu). It does **not** launch a local stdio server directly.
 The clean way to connect this **local** server is OpenAI's **Secure MCP Tunnel**
 (`tunnel-client`): outbound-only, no public port. This repo ships an **HTTP
-transport** for exactly this — run `node dist/index.js --http` (listens on
-`http://127.0.0.1:3000/mcp`) — though the tunnel can also drive the stdio server
+transport** for exactly this: run `node dist/index.js --http` (listens on
+`http://127.0.0.1:3000/mcp`), though the tunnel can also drive the stdio server
 directly.
 
 Step-by-step: **[`docs/ATTIVAZIONE.md`](docs/ATTIVAZIONE.md)** (Italian) ·
@@ -136,8 +140,8 @@ technical notes: [`docs/CHATGPT.md`](docs/CHATGPT.md).
 
 Two transports, one codebase:
 
-- **stdio** (default) — `node dist/index.js`
-- **Streamable HTTP** — `node dist/index.js --http` (`PORT` / `HOST` override the
+- **stdio** (default): `node dist/index.js`
+- **Streamable HTTP**: `node dist/index.js --http` (`PORT` / `HOST` override the
   default `127.0.0.1:3000`, endpoint `/mcp`, `/healthz` for liveness)
 
 ---
@@ -170,8 +174,8 @@ If you denied it or nothing happens, enable it manually:
 | **Power** | `illustrator_run_script` |
 
 **Coordinates:** all positions and sizes are in **points** (= pixels at 72 dpi),
-measured from the **top-left of the active artboard**, with **Y increasing downward**
-— the intuitive convention for design tools. (The `run_script` helpers convert
+measured from the **top-left of the active artboard**, with **Y increasing downward**,
+the intuitive convention for design tools. (The `run_script` helpers convert
 from Illustrator's native Y-up global system.)
 
 **Colors:** hex (`#FF7F00`), a common name (`red`, `blue`, `green`, …), or `none`.
@@ -181,10 +185,10 @@ Colors are automatically converted to RGB or CMYK to match the document.
 
 `illustrator_vectorize_image` supports two engines:
 
-- **`vtracer`** (default) — the open-source [VTracer](https://github.com/visioncortex/vtracer)
+- **`vtracer`** (default): the open-source [VTracer](https://github.com/visioncortex/vtracer)
   CLI produces a clean SVG that is opened in Illustrator as editable paths. Free,
   local, and usually cleaner than Image Trace. **Requires the `vtracer` binary.**
-- **`image_trace`** — Illustrator's built-in Image Trace. No install, kept as a fallback.
+- **`image_trace`**: Illustrator's built-in Image Trace. No install, kept as a fallback.
 
 **Install VTracer** (once), pick one:
 
@@ -204,7 +208,7 @@ photorealistic images produce many paths and usually need manual cleanup.
 ### The `run_script` escape hatch
 
 `illustrator_run_script` runs arbitrary ExtendScript. The code runs inside a
-function — `return` a JSON-serializable value to get it back. Prelude helpers are
+function. `return` a JSON-serializable value to get it back. Prelude helpers are
 available: `__doc()`, `__color(hex)`, `__setPos(item, x, y)`, `__itemInfo(item)`,
 `__abRect()`, `__activeAB(doc)`, `__style(item, opts)`.
 
@@ -236,7 +240,7 @@ return { count: out.length, texts: out };
 | *"Not authorized to control Illustrator"* | Grant Automation permission (see above), then retry. |
 | *"Could not reach Adobe Illustrator"* | Make sure Illustrator is installed and running. |
 | *"No document is open"* | Create one with `illustrator_create_document` or open a file first. |
-| Calls time out | Illustrator may be showing a modal dialog — bring it to the front and dismiss it. |
+| Calls time out | Illustrator may be showing a modal dialog; bring it to the front and dismiss it. |
 | Tools don't appear in the client | Check the absolute path in the config and restart the client. |
 
 ---
@@ -250,7 +254,7 @@ return { count: out.length, texts: out };
 - More workflow tools (pathfinder, effects, symbols, swatches, batch export).
 - ✅ HTTP (Streamable) transport for ChatGPT / remote MCP clients (`--http`).
 
-Contributions welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Contributions welcome: see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ---
 
@@ -258,7 +262,10 @@ Contributions welcome — see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 Questo è un connettore che permette a **Claude, ChatGPT o Cursor di comandare Adobe
 Illustrator** parlandogli in linguaggio naturale ("crea un poster A4, aggiungi un
-rettangolo rosso e un titolo").
+rettangolo rosso e un titolo"). Non è un generatore di immagini vettoriali: lavora
+dentro un documento Illustrator vero, già aperto sul tuo schermo, che resta
+modificabile a mano dopo. La vettorizzazione di un'immagine raster è solo uno dei
+29 tool disponibili.
 
 **Per usarlo:**
 
